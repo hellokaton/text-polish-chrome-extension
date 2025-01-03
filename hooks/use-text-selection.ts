@@ -19,17 +19,15 @@ export function useTextSelection({
   useEffect(() => {
     let selectionTimeout: NodeJS.Timeout;
 
-    const handleSelectionChange = () => {
+    const handleMouseUp = () => {
       const selection = window.getSelection();
       const text = selection?.toString().trim() || "";
 
-      // 清除之前的timeout
       if (selectionTimeout) {
         clearTimeout(selectionTimeout);
       }
 
       if (!text) {
-        // 当没有选中文本时，延迟隐藏菜单，以便用户有时间点击菜单
         selectionTimeout = setTimeout(() => {
           setShowFloating(false);
           setSelectedText("");
@@ -51,17 +49,12 @@ export function useTextSelection({
       }
     };
 
-    // 监听选择变化事件
-    document.addEventListener("selectionchange", handleSelectionChange);
-
-    // 监听鼠标移动事件
     const handleMouseMove = (e: MouseEvent) => {
       if (!showFloating) return;
 
       const selection = window.getSelection();
       const text = selection?.toString().trim() || "";
 
-      // 如果没有选中文本，检查鼠标是否在菜单或结果卡片上
       if (!text) {
         const isOverMenu = menuRef.current?.contains(e.target as Node);
         const isOverResult = resultRef.current?.contains(e.target as Node);
@@ -74,10 +67,11 @@ export function useTextSelection({
       }
     };
 
+    document.addEventListener("mouseup", handleMouseUp);
     document.addEventListener("mousemove", handleMouseMove);
 
     return () => {
-      document.removeEventListener("selectionchange", handleSelectionChange);
+      document.removeEventListener("mouseup", handleMouseUp);
       document.removeEventListener("mousemove", handleMouseMove);
       if (selectionTimeout) {
         clearTimeout(selectionTimeout);
