@@ -24,7 +24,7 @@ A Chrome extension built with WXT and shadcn/ui that helps you polish text with 
 
 ## 🚀 Getting Started
 
-1. Clone the repository: `git clone https://github.com/hellokaton/ai-text-helper.git`
+1. Clone the repository: `git clone https://github.com/hellokaton/text-polish-chrome-extension.git`
 2. Install dependencies:
 
 ```bash
