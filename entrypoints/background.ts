@@ -1,50 +1,52 @@
-import {APIRequest} from "~/types";
+import { APIRequest } from "~/types";
+import {ofetch} from "ofetch";
 
 export default defineBackground(() => {
   // 处理来自 popup 和 content script 的消息
   browser.runtime.onMessage.addListener(
-      (request: APIRequest, sender, sendResponse) => {
-        // 返回一个 Promise
-        const responsePromise = (async () => {
-          try {
-            switch (request.type) {
-              case "testAPI":
-                return await testAPI(request.config);
-              case "translate":
-                return await translateText(
-                    request.config,
-                    request.text!,
-                    request.targetLang!
-                );
-              case "explain":
-                return await explainText(
-                    request.config,
-                    request.text!,
-                    request.targetLang!
-                );
-              default:
-                throw new Error("Unknown request type");
+    (request: APIRequest, sender, sendResponse) => {
+      // 返回一个 Promise
+      const responsePromise = (async () => {
+        try {
+          switch (request.type) {
+            case "testAPI":
+              return await testAPI(request.config);
+            case "translate":
+              return await translateText(
+                request.config,
+                request.text!,
+                request.targetLang!
+              );
+            case "explain":
+              return await explainText(
+                request.config,
+                request.text!,
+                request.targetLang!
+              );
+            default: {
+              throw new Error("Unknown request type: " + request.type);
             }
-          } catch (error) {
-            console.error("API request failed:", error);
-            throw error;
           }
-        })();
-
-        // 返回 true 表示会异步发送响应
-        responsePromise.then(sendResponse);
-        return true;
-      }
+        } catch (error) {
+          console.error("API request failed:", error);
+          throw error;
+        }
+      })();
+      // 返回 true 表示会异步发送响应
+      responsePromise.then(sendResponse);
+      return true;
+    }
   );
 });
 
 async function testAPI(config: APIRequest["config"]) {
-  const response = await fetch(`${config.baseUrl}/chat/completions`, {
+  const response = await ofetch(`${config.baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${config.apiKey}`,
     },
+    timeout: 5000,
     body: JSON.stringify({
       model: config.model,
       messages: [
@@ -55,18 +57,16 @@ async function testAPI(config: APIRequest["config"]) {
       ],
     }),
   });
-
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
-
   return { success: true };
 }
 
 async function translateText(
-    config: APIRequest["config"],
-    text: string,
-    targetLang: string
+  config: APIRequest["config"],
+  text: string,
+  targetLang: string
 ) {
   const langMap: Record<string, string> = {
     zh: "Chinese",
@@ -77,19 +77,20 @@ async function translateText(
     de: "German",
   };
 
-  const response = await fetch(`${config.baseUrl}/chat/completions`, {
+  const response = await ofetch(`${config.baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${config.apiKey}`,
     },
+    timeout: 5000,
     body: JSON.stringify({
       model: config.model,
       messages: [
         {
           role: "system",
           content: `You are a professional translator. Translate the given text into ${
-              langMap[targetLang] || "English"
+            langMap[targetLang] || "English"
           }. Only provide the translation without any explanations or additional content.`,
         },
         {
@@ -115,9 +116,9 @@ async function translateText(
 }
 
 async function explainText(
-    config: APIRequest["config"],
-    text: string,
-    targetLang: string
+  config: APIRequest["config"],
+  text: string,
+  targetLang: string
 ) {
   const langMap: Record<string, string> = {
     zh: "Chinese",
@@ -140,7 +141,7 @@ async function explainText(
         {
           role: "system",
           content: `You are an expert at explaining complex text. Provide a clear and concise explanation in ${
-              langMap[targetLang] || "English"
+            langMap[targetLang] || "English"
           } about what the given text means or implies. Focus on the main points and context.`,
         },
         {

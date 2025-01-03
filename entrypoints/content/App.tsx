@@ -17,20 +17,6 @@ const App: React.FC = () => {
   const { settings } = useSettings();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const testMessage = async () => {
-      try {
-        console.log("Testing message passing...");
-        const response = await browser.runtime.sendMessage({ type: "test" });
-        console.log("Message response:", response);
-      } catch (error) {
-        console.error("Message error:", error);
-      }
-    };
-
-    testMessage();
-  }, []);
-
   const hideAll = () => {
     setShowMenu(false);
     setResult(null);
@@ -47,17 +33,17 @@ const App: React.FC = () => {
     type: "translate" | "explain",
     action: typeof translateText | typeof explainText
   ) => {
-    if (!settings) {
+    if (!settings?.isValidated) {
       toast({
         variant: "destructive",
-        description: "请先在设置中配置 API",
+        description: "请先在设置中正确配置并测试 API",
         duration: 2000,
       });
+      hideAll();
       return;
     }
 
     console.log("Settings:", settings);
-    console.log("Selected text:", selectedText);
 
     setResult({ type, text: "", loading: true });
     setShowMenu(false);
@@ -87,7 +73,7 @@ const App: React.FC = () => {
         description: `${type === "translate" ? "翻译" : "解释"}失败，请重试`,
         duration: 2000,
       });
-      setResult(null);
+      hideAll();
     }
   };
 

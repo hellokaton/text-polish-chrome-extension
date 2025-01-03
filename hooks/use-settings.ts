@@ -6,6 +6,7 @@ export interface Settings {
   apiKey: string;
   model: string;
   targetLang: string;
+  isValidated?: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -13,6 +14,7 @@ const defaultSettings: Settings = {
   apiKey: "",
   model: "gpt-3.5-turbo",
   targetLang: "zh",
+  isValidated: false,
 };
 
 const SETTINGS_KEY = "sync:settings";

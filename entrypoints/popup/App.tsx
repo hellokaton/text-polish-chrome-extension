@@ -28,8 +28,9 @@ import { useToast } from "~/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useSettings } from "~/hooks/use-settings";
+import {Settings, useSettings} from "~/hooks/use-settings";
 import { Loader2 } from "lucide-react";
+import {storage} from "wxt/storage";
 
 const formSchema = z.object({
   baseUrl: z
@@ -65,13 +66,30 @@ function App() {
 
   // 当设置加载完成后更新表单
   React.useEffect(() => {
-    if (!loading) {
-      form.reset(settings);
+    if (!loading && settings) {
+      // 保留 isValidated 状态
+      form.reset({
+        ...settings,
+      });
     }
   }, [loading, settings, form]);
 
+  React.useEffect(() => {
+    console.log("Current settings:", settings);
+  }, [settings]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      // 如果没有通过API测试，不允许保存
+      if (!settings?.isValidated) {
+        toast({
+          variant: "destructive",
+          description: "请先测试 API 连接是否正常",
+          duration: 2000,
+        });
+        return;
+      }
+      console.log("Settings before validation check:", settings);
       await saveSettings(values);
       toast({
         description: "设置已保存",
@@ -108,6 +126,8 @@ function App() {
         },
       });
 
+      // 测试成功后直接保存设置并标记为已验证
+      await saveSettings({ ...values, isValidated: true });
       toast({
         description: "API 连接成功！",
         duration: 2000,

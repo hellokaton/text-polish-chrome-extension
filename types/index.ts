@@ -41,3 +41,11 @@ export interface APIRequest {
 export interface APIResponse extends OpenAIResponse {
   success?: boolean;
 }
+
+export interface Settings {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  targetLang: string;
+  isValidated?: boolean;
+}
