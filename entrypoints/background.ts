@@ -5,35 +5,38 @@ export default defineBackground(() => {
   // 处理来自 popup 和 content script 的消息
   browser.runtime.onMessage.addListener(
     (request: APIRequest, sender, sendResponse) => {
-      // 返回一个 Promise
-      const responsePromise = (async () => {
+      (async () => {
         try {
+          let response;
           switch (request.type) {
             case "testAPI":
-              return await testAPI(request.config);
+              response = await testAPI(request.config);
+              break;
             case "translate":
-              return await translateText(
+              response = await translateText(
                 request.config,
                 request.text!,
                 request.targetLang!
               );
+              break;
             case "explain":
-              return await explainText(
+              response = await explainText(
                 request.config,
                 request.text!,
                 request.targetLang!
               );
+              break;
             default: {
               throw new Error("Unknown request type: " + request.type);
             }
           }
-        } catch (error) {
-          console.error("API request failed:", error);
-          throw error;
+          sendResponse({ success: true, data: response });
+        } catch (error: any) {
+          console.error("Request failed:", error);
+          sendResponse({ success: false, error: error.message || "请求失败" });
         }
       })();
-      // 返回 true 表示会异步发送响应
-      responsePromise.then(sendResponse);
+
       return true;
     }
   );
@@ -41,7 +44,7 @@ export default defineBackground(() => {
 
 async function testAPI(config: APIRequest["config"]) {
   try {
-    await ofetch(`${config.baseUrl}/chat/completions`, {
+    const data = await ofetch(`${config.baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -58,6 +61,11 @@ async function testAPI(config: APIRequest["config"]) {
         ],
       }),
     });
+
+    // 验证响应格式
+    if (!data?.choices?.[0]?.message?.content) {
+      throw new Error("Invalid API response format");
+    }
 
     return { success: true };
   } catch (error: any) {

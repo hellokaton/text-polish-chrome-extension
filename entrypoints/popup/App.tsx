@@ -28,9 +28,9 @@ import { useToast } from "~/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import {Settings, useSettings} from "~/hooks/use-settings";
+import { Settings, useSettings } from "~/hooks/use-settings";
 import { Loader2 } from "lucide-react";
-import {storage} from "wxt/storage";
+import { storage } from "wxt/storage";
 
 const formSchema = z.object({
   baseUrl: z
@@ -117,7 +117,7 @@ function App() {
 
     setTesting(true);
     try {
-      await browser.runtime.sendMessage({
+      const response = await browser.runtime.sendMessage({
         type: "testAPI",
         config: {
           baseUrl: values.baseUrl,
@@ -126,17 +126,21 @@ function App() {
         },
       });
 
+      if (!response.success) {
+        throw new Error(response.error);
+      }
+
       // 测试成功后直接保存设置并标记为已验证
       await saveSettings({ ...values, isValidated: true });
       toast({
         description: "API 连接成功！",
         duration: 2000,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("API test failed:", error);
       toast({
         variant: "destructive",
-        description: "API 连接失败，请检查配置",
+        description: error.message || "API 连接失败，请检查配置",
         duration: 2000,
       });
     } finally {
