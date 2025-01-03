@@ -1,9 +1,3 @@
-// OpenAI API 相关类型
-export interface OpenAIMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
-
 export interface OpenAIResponse {
   choices: Array<{
     message: {
@@ -38,8 +32,9 @@ export interface APIRequest {
   targetLang?: string;
 }
 
-export interface APIResponse extends OpenAIResponse {
+export interface APIResponse {
   success?: boolean;
+  data?: OpenAIResponse;
 }
 
 export interface Settings {

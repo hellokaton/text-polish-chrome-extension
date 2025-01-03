@@ -44,7 +44,7 @@ export default defineBackground(() => {
 
 async function testAPI(config: APIRequest["config"]) {
   try {
-    const data = await ofetch(`${config.baseUrl}/chat/completions`, {
+    const response = await ofetch(`${config.baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -62,6 +62,7 @@ async function testAPI(config: APIRequest["config"]) {
       }),
     });
 
+    const data = await response.json();
     // 验证响应格式
     if (!data?.choices?.[0]?.message?.content) {
       throw new Error("Invalid API response format");
@@ -89,13 +90,13 @@ async function translateText(
   };
 
   try {
-    const data = await ofetch(`${config.baseUrl}/chat/completions`, {
+    const response = await ofetch(`${config.baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${config.apiKey}`,
       },
-      timeout: 5000,
+      timeout: 10000,
       body: JSON.stringify({
         model: config.model,
         messages: [
@@ -112,12 +113,7 @@ async function translateText(
         ],
       }),
     });
-
-    if (!data?.choices?.[0]?.message?.content) {
-      throw new Error("Invalid API response format");
-    }
-
-    return data;
+    return response;
   } catch (error: any) {
     console.error("Translation failed:", error);
     throw new Error(error.message || "翻译失败");
@@ -139,13 +135,13 @@ async function explainText(
   };
 
   try {
-    const data = await ofetch(`${config.baseUrl}/chat/completions`, {
+    const response = await ofetch(`${config.baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${config.apiKey}`,
       },
-      timeout: 5000,
+      timeout: 10000,
       body: JSON.stringify({
         model: config.model,
         messages: [
@@ -162,12 +158,7 @@ async function explainText(
         ],
       }),
     });
-
-    if (!data?.choices?.[0]?.message?.content) {
-      throw new Error("Invalid API response format");
-    }
-
-    return data;
+    return response;
   } catch (error: any) {
     console.error("Explanation failed:", error);
     throw new Error(error.message || "解释失败");

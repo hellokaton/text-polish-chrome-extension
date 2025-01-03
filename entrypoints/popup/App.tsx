@@ -40,6 +40,7 @@ const formSchema = z.object({
   apiKey: z.string().min(1, "API Key 不能为空"),
   model: z.string().min(1, "请输入模型名称"),
   targetLang: z.string().min(1, "请选择目标语言"),
+  isValidated: z.boolean().default(false),
 });
 
 // 建议的模型列表

@@ -33,6 +33,7 @@ const App: React.FC = () => {
     type: "translate" | "explain",
     action: typeof translateText | typeof explainText
   ) => {
+    console.log("Settings:", settings)
     if (!settings?.isValidated) {
       toast({
         variant: "destructive",
@@ -57,13 +58,13 @@ const App: React.FC = () => {
 
       console.log("API Response:", response);
 
-      if (!response?.choices?.[0]?.message?.content) {
+      if (!response?.data?.choices?.[0]?.message?.content) {
         throw new Error("Invalid API response format");
       }
 
       setResult({
         type,
-        text: response.choices[0].message.content,
+        text: response.data.choices[0].message.content,
         loading: false,
       });
     } catch (error) {
