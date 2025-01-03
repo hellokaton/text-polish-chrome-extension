@@ -131,7 +131,7 @@ function App() {
         throw new Error(response.error);
       }
 
-      // 测试成功后直接保存设置并标记为已验证
+      // 测试成功后保存设置并标记为已验证
       await saveSettings({ ...values, isValidated: true });
       toast({
         description: "API 连接成功！",
@@ -139,6 +139,8 @@ function App() {
       });
     } catch (error: any) {
       console.error("API test failed:", error);
+      // 测试失败后保存设置并标记为未验证
+      await saveSettings({ ...values, isValidated: false });
       toast({
         variant: "destructive",
         description: error.message || "API 连接失败，请检查配置",

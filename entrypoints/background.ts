@@ -75,6 +75,30 @@ async function testAPI(config: APIRequest["config"]) {
   }
 }
 
+async function callOpenAI(
+  config: APIRequest["config"],
+  messages: Array<{ role: string; content: string }>
+) {
+  try {
+    const response = await ofetch(`${config.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.apiKey}`,
+      },
+      timeout: 10000,
+      body: JSON.stringify({
+        model: config.model,
+        messages,
+      }),
+    });
+    return response;
+  } catch (error: any) {
+    console.error("API call failed:", error);
+    throw new Error(error.message || "请求失败");
+  }
+}
+
 async function translateText(
   config: APIRequest["config"],
   text: string,
@@ -89,35 +113,18 @@ async function translateText(
     de: "German",
   };
 
-  try {
-    const response = await ofetch(`${config.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${config.apiKey}`,
-      },
-      timeout: 10000,
-      body: JSON.stringify({
-        model: config.model,
-        messages: [
-          {
-            role: "system",
-            content: `You are a professional translator. Translate the given text into ${
-              langMap[targetLang] || "English"
-            }. Only provide the translation without any explanations or additional content.`,
-          },
-          {
-            role: "user",
-            content: text,
-          },
-        ],
-      }),
-    });
-    return response;
-  } catch (error: any) {
-    console.error("Translation failed:", error);
-    throw new Error(error.message || "翻译失败");
-  }
+  return callOpenAI(config, [
+    {
+      role: "system",
+      content: `You are a professional translator. Translate the given text into ${
+        langMap[targetLang] || "English"
+      }. Only provide the translation without any explanations or additional content.`,
+    },
+    {
+      role: "user",
+      content: text,
+    },
+  ]);
 }
 
 async function explainText(
@@ -134,33 +141,16 @@ async function explainText(
     de: "German",
   };
 
-  try {
-    const response = await ofetch(`${config.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${config.apiKey}`,
-      },
-      timeout: 10000,
-      body: JSON.stringify({
-        model: config.model,
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert at explaining complex text. Provide a clear and concise explanation in ${
-              langMap[targetLang] || "English"
-            } about what the given text means or implies. Focus on the main points and context.`,
-          },
-          {
-            role: "user",
-            content: text,
-          },
-        ],
-      }),
-    });
-    return response;
-  } catch (error: any) {
-    console.error("Explanation failed:", error);
-    throw new Error(error.message || "解释失败");
-  }
+  return callOpenAI(config, [
+    {
+      role: "system",
+      content: `You are an expert at explaining complex text. Provide a clear and concise explanation in ${
+        langMap[targetLang] || "English"
+      } about what the given text means or implies. Focus on the main points and context.`,
+    },
+    {
+      role: "user",
+      content: text,
+    },
+  ]);
 }
