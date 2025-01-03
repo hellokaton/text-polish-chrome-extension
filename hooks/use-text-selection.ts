@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
-import type { Position } from "~/types";
+import { useState, useEffect, RefObject } from "react";
+import { type Position } from "~/types";
 
 interface UseTextSelectionProps {
-  menuRef: React.RefObject<HTMLDivElement | null>;
-  resultRef: React.RefObject<HTMLDivElement | null>;
+  menuRef: RefObject<HTMLDivElement>;
+  resultRef: RefObject<HTMLDivElement>;
   onHide: () => void;
 }
 
@@ -16,80 +16,79 @@ export function useTextSelection({
   const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
   const [selectedText, setSelectedText] = useState("");
 
-  const handleSelection = useCallback(
-    (e: MouseEvent, isSelecting: boolean) => {
-      const target = e.target as HTMLElement;
-      if (
-        menuRef.current?.contains(target) ||
-        resultRef.current?.contains(target)
-      ) {
+  useEffect(() => {
+    let selectionTimeout: NodeJS.Timeout;
+
+    const handleSelectionChange = () => {
+      const selection = window.getSelection();
+      const text = selection?.toString().trim() || "";
+
+      // 清除之前的timeout
+      if (selectionTimeout) {
+        clearTimeout(selectionTimeout);
+      }
+
+      if (!text) {
+        // 当没有选中文本时，延迟隐藏菜单，以便用户有时间点击菜单
+        selectionTimeout = setTimeout(() => {
+          setShowFloating(false);
+          setSelectedText("");
+          onHide();
+        }, 200);
         return;
       }
 
-      if (isSelecting) {
-        const selection = window.getSelection();
-        const text = selection?.toString().trim();
+      const range = selection?.getRangeAt(0);
+      const rect = range?.getBoundingClientRect();
 
-        if (text) {
-          const range = selection?.getRangeAt(0);
-          const rect = range?.getBoundingClientRect();
+      if (rect) {
+        setPosition({
+          x: rect.left + rect.width / 2,
+          y: rect.top - 10,
+        });
+        setSelectedText(text);
+        setShowFloating(true);
+      }
+    };
 
-          if (rect) {
-            setPosition({
-              x: rect.x + rect.width / 2,
-              y: window.scrollY + rect.y - 10,
-            });
-            setSelectedText(text);
-            setShowFloating(true);
-          }
-        } else {
+    // 监听选择变化事件
+    document.addEventListener("selectionchange", handleSelectionChange);
+
+    // 监听鼠标移动事件
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!showFloating) return;
+
+      const selection = window.getSelection();
+      const text = selection?.toString().trim() || "";
+
+      // 如果没有选中文本，检查鼠标是否在菜单或结果卡片上
+      if (!text) {
+        const isOverMenu = menuRef.current?.contains(e.target as Node);
+        const isOverResult = resultRef.current?.contains(e.target as Node);
+
+        if (!isOverMenu && !isOverResult) {
+          setShowFloating(false);
+          setSelectedText("");
           onHide();
         }
       }
-    },
-    [menuRef, resultRef, onHide]
-  );
-
-  useEffect(() => {
-    let isSelecting = false;
-
-    const handleMouseDown = (e: MouseEvent) => {
-      isSelecting = true;
-      handleSelection(e, false);
     };
 
-    const handleMouseUp = (e: MouseEvent) => {
-      setTimeout(() => {
-        handleSelection(e, isSelecting);
-        isSelecting = false;
-      }, 0);
-    };
-
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (
-        !menuRef.current?.contains(target) &&
-        !resultRef.current?.contains(target)
-      ) {
-        onHide();
-      }
-    };
-
-    document.addEventListener("mousedown", handleMouseDown);
-    document.addEventListener("mouseup", handleMouseUp);
-    document.addEventListener("click", handleClickOutside);
+    document.addEventListener("mousemove", handleMouseMove);
 
     return () => {
-      document.removeEventListener("mousedown", handleMouseDown);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("selectionchange", handleSelectionChange);
+      document.removeEventListener("mousemove", handleMouseMove);
+      if (selectionTimeout) {
+        clearTimeout(selectionTimeout);
+      }
     };
-  }, [menuRef, resultRef, handleSelection, onHide]);
+  }, [menuRef, resultRef, onHide, showFloating]);
 
   return {
     showFloating,
+    setShowFloating,
     position,
     selectedText,
-    setShowFloating,
   };
 }
