@@ -1,5 +1,5 @@
 import { APIRequest } from "~/types";
-import {ofetch} from "ofetch";
+import { ofetch } from "ofetch";
 
 export default defineBackground(() => {
   // 处理来自 popup 和 content script 的消息
@@ -40,27 +40,30 @@ export default defineBackground(() => {
 });
 
 async function testAPI(config: APIRequest["config"]) {
-  const response = await ofetch(`${config.baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${config.apiKey}`,
-    },
-    timeout: 5000,
-    body: JSON.stringify({
-      model: config.model,
-      messages: [
-        {
-          role: "user",
-          content: "Say 'API connection successful!' in Chinese",
-        },
-      ],
-    }),
-  });
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+  try {
+    await ofetch(`${config.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.apiKey}`,
+      },
+      timeout: 5000,
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          {
+            role: "user",
+            content: "Say 'API connection successful!' in Chinese",
+          },
+        ],
+      }),
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Test API failed:", error);
+    throw new Error(error.message || "API 连接失败");
   }
-  return { success: true };
 }
 
 async function translateText(
@@ -77,42 +80,40 @@ async function translateText(
     de: "German",
   };
 
-  const response = await ofetch(`${config.baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${config.apiKey}`,
-    },
-    timeout: 5000,
-    body: JSON.stringify({
-      model: config.model,
-      messages: [
-        {
-          role: "system",
-          content: `You are a professional translator. Translate the given text into ${
-            langMap[targetLang] || "English"
-          }. Only provide the translation without any explanations or additional content.`,
-        },
-        {
-          role: "user",
-          content: text,
-        },
-      ],
-    }),
-  });
+  try {
+    const data = await ofetch(`${config.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.apiKey}`,
+      },
+      timeout: 5000,
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          {
+            role: "system",
+            content: `You are a professional translator. Translate the given text into ${
+              langMap[targetLang] || "English"
+            }. Only provide the translation without any explanations or additional content.`,
+          },
+          {
+            role: "user",
+            content: text,
+          },
+        ],
+      }),
+    });
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    if (!data?.choices?.[0]?.message?.content) {
+      throw new Error("Invalid API response format");
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error("Translation failed:", error);
+    throw new Error(error.message || "翻译失败");
   }
-
-  const data = await response.json();
-
-  // 验证响应格式
-  if (!data?.choices?.[0]?.message?.content) {
-    throw new Error("Invalid API response format");
-  }
-
-  return data;
 }
 
 async function explainText(
@@ -129,39 +130,38 @@ async function explainText(
     de: "German",
   };
 
-  const response = await fetch(`${config.baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model,
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert at explaining complex text. Provide a clear and concise explanation in ${
-            langMap[targetLang] || "English"
-          } about what the given text means or implies. Focus on the main points and context.`,
-        },
-        {
-          role: "user",
-          content: text,
-        },
-      ],
-    }),
-  });
+  try {
+    const data = await ofetch(`${config.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.apiKey}`,
+      },
+      timeout: 5000,
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert at explaining complex text. Provide a clear and concise explanation in ${
+              langMap[targetLang] || "English"
+            } about what the given text means or implies. Focus on the main points and context.`,
+          },
+          {
+            role: "user",
+            content: text,
+          },
+        ],
+      }),
+    });
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    if (!data?.choices?.[0]?.message?.content) {
+      throw new Error("Invalid API response format");
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error("Explanation failed:", error);
+    throw new Error(error.message || "解释失败");
   }
-
-  const data = await response.json();
-
-  // 验证响应格式
-  if (!data?.choices?.[0]?.message?.content) {
-    throw new Error("Invalid API response format");
-  }
-
-  return data;
 }
