@@ -11,8 +11,8 @@ import type { ResultState } from "~/types";
 const App: React.FC = () => {
   const [showMenu, setShowMenu] = useState(false);
   const [result, setResult] = useState<ResultState | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const resultRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const resultRef = useRef<HTMLDivElement | null>(null);
 
   const { settings } = useSettings();
   const { toast } = useToast();

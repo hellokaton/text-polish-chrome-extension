@@ -2,8 +2,8 @@ import { useState, useEffect, RefObject } from "react";
 import { type Position } from "~/types";
 
 interface UseTextSelectionProps {
-  menuRef: RefObject<HTMLDivElement>;
-  resultRef: RefObject<HTMLDivElement>;
+  menuRef: RefObject<HTMLDivElement | null>;
+  resultRef: RefObject<HTMLDivElement | null>;
   onHide: () => void;
 }
 
