@@ -61,14 +61,7 @@ async function testAPI(config: APIRequest["config"]) {
         ],
       }),
     });
-
-    const data = await response.json();
-    // 验证响应格式
-    if (!data?.choices?.[0]?.message?.content) {
-      throw new Error("Invalid API response format");
-    }
-
-    return { success: true };
+    return response;
   } catch (error: any) {
     console.error("Test API failed:", error);
     throw new Error(error.message || "API 连接失败");
