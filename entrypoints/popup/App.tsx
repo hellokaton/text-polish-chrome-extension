@@ -105,7 +105,7 @@ function App() {
     }
   }
 
-  const handleTestAPI = async () => {
+  async function handleTestAPI() {
     const values = form.getValues();
     if (!values.apiKey || !values.baseUrl) {
       toast({
@@ -131,16 +131,24 @@ function App() {
         throw new Error(response.error);
       }
 
-      // 测试成功后保存设置并标记为已验证
-      await saveSettings({ ...values, isValidated: true });
+      // 测试成功后更新表单的 isValidated 状态
+      const newSettings = { ...values, isValidated: true };
+      await saveSettings(newSettings);
+      // 立即更新表单状态
+      form.reset(newSettings);
+
       toast({
         description: "API 连接成功！",
         duration: 2000,
       });
     } catch (error: any) {
       console.error("API test failed:", error);
-      // 测试失败后保存设置并标记为未验证
-      await saveSettings({ ...values, isValidated: false });
+      // 测试失败后更新表单的 isValidated 状态
+      const newSettings = { ...values, isValidated: false };
+      await saveSettings(newSettings);
+      // 立即更新表单状态
+      form.reset(newSettings);
+
       toast({
         variant: "destructive",
         description: error.message || "API 连接失败，请检查配置",
@@ -149,7 +157,7 @@ function App() {
     } finally {
       setTesting(false);
     }
-  };
+  }
 
   if (loading) {
     return (

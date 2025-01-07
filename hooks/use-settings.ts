@@ -1,62 +1,46 @@
-import { useCallback, useEffect, useState } from "react";
-import { storage } from "wxt/storage";
-
-export interface Settings {
-  baseUrl: string;
-  apiKey: string;
-  model: string;
-  targetLang: string;
-  isValidated?: boolean;
-}
-
-const defaultSettings: Settings = {
-  baseUrl: "https://api.openai.com/v1",
-  apiKey: "",
-  model: "gpt-3.5-turbo",
-  targetLang: "zh",
-  isValidated: false,
-};
-
-const SETTINGS_KEY = "sync:settings";
+import {useEffect, useState} from "react";
+import {storage} from "wxt/storage";
+import type {Settings} from "~/types";
 
 export function useSettings() {
-  const [settings, setSettings] = useState<Settings>(defaultSettings);
-  const [loading, setLoading] = useState(true);
+    const [settings, setSettings] = useState<Settings | null>(null);
+    const [loading, setLoading] = useState(true);
 
-  // 加载设置
-  useEffect(() => {
+    useEffect(() => {
+        // 初始加载设置
+        loadSettings();
+
+        // 监听存储变化
+        const handleStorageChange = async (changes: Record<string, any>) => {
+            if (changes.settings) {
+                setSettings(changes.settings.newValue);
+            }
+        };
+
+        // 添加存储变化监听器
+        browser.storage.onChanged.addListener(handleStorageChange);
+
+        return () => {
+            // 清理监听器
+            browser.storage.onChanged.removeListener(handleStorageChange);
+        };
+    }, []);
+
     const loadSettings = async () => {
-      try {
-        const savedSettings = await storage.getItem<Settings>(SETTINGS_KEY);
-        if (savedSettings) {
-          setSettings(savedSettings);
+        try {
+            const settings: Settings | null = await storage.getItem('local:settings');
+            setSettings(settings);
+        } catch (error) {
+            console.error("Failed to load settings:", error);
+        } finally {
+            setLoading(false);
         }
-      } catch (error) {
-        console.error("Failed to load settings:", error);
-      } finally {
-        setLoading(false);
-      }
     };
 
-    loadSettings();
-  }, []);
+    const saveSettings = async (newSettings: Settings) => {
+        await storage.setItem("local:settings", newSettings);
+        setSettings(newSettings); // 立即更新本地状态
+    };
 
-  // 保存设置
-  const saveSettings = useCallback(async (newSettings: Settings) => {
-    await storage.setItem(SETTINGS_KEY, newSettings);
-    setSettings(newSettings);
-  }, []);
-
-  // 重置设置
-  const resetSettings = useCallback(async () => {
-    await storage.removeItem(SETTINGS_KEY);
-    setSettings(defaultSettings);
-  }, []);
-
-  return {
-    settings,
-    loading,
-    saveSettings,
-    resetSettings,
-  };
+    return {settings, loading, saveSettings};
 }

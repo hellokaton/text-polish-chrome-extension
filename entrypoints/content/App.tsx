@@ -33,12 +33,11 @@ const App: React.FC = () => {
     type: "translate" | "explain",
     action: typeof translateText | typeof explainText
   ) => {
-    console.log("Settings:", settings)
     if (!settings?.isValidated) {
       toast({
         variant: "destructive",
-        description: "请先在设置中正确配置并测试 API",
-        duration: 2000,
+        description: "API 未验证或验证失败，请在扩展设置中配置并测试 API",
+        duration: 3000,
       });
       hideAll();
       return;
