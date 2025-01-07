@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import {storage} from "wxt/storage";
 import type {Settings} from "~/types";
+import {defaultSettings} from "~/types";
 
 export function useSettings() {
     const [settings, setSettings] = useState<Settings | null>(null);
@@ -10,28 +11,25 @@ export function useSettings() {
         // 初始加载设置
         loadSettings();
 
-        // 监听存储变化
-        const handleStorageChange = async (changes: Record<string, any>) => {
-            if (changes.settings) {
-                setSettings(changes.settings.newValue);
-            }
-        };
-
-        // 添加存储变化监听器
-        browser.storage.onChanged.addListener(handleStorageChange);
-
+        const unwatch = storage.watch<Settings>(
+            'local:settings',
+            (newSettings, oldSettings) => {
+                setSettings(newSettings);
+            },
+        );
         return () => {
             // 清理监听器
-            browser.storage.onChanged.removeListener(handleStorageChange);
+            unwatch();
         };
     }, []);
 
     const loadSettings = async () => {
         try {
-            const settings: Settings | null = await storage.getItem('local:settings');
-            setSettings(settings);
+            const settings: Settings | null = await storage.getItem("local:settings");
+            setSettings(settings || defaultSettings);
         } catch (error) {
             console.error("Failed to load settings:", error);
+            setSettings(defaultSettings);
         } finally {
             setLoading(false);
         }

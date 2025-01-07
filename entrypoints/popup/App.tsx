@@ -28,9 +28,8 @@ import { useToast } from "~/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Settings, useSettings } from "~/hooks/use-settings";
+import { useSettings } from "~/hooks/use-settings";
 import { Loader2 } from "lucide-react";
-import { storage } from "wxt/storage";
 
 const formSchema = z.object({
   baseUrl: z
@@ -60,9 +59,13 @@ function App() {
   const { settings, loading, saveSettings } = useSettings();
   const [testing, setTesting] = React.useState(false);
 
+  console.log("Settings:", settings);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: settings,
+    defaultValues: {
+      ...settings
+    },
   });
 
   // 当设置加载完成后更新表单
@@ -74,10 +77,6 @@ function App() {
       });
     }
   }, [loading, settings, form]);
-
-  React.useEffect(() => {
-    console.log("Current settings:", settings);
-  }, [settings]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {

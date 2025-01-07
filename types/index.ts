@@ -44,3 +44,11 @@ export interface Settings {
   targetLang: string;
   isValidated?: boolean;
 }
+
+export const defaultSettings: Settings = {
+  baseUrl: "https://api.openai.com/v1",
+  apiKey: "",
+  model: "gpt-3.5-turbo",
+  targetLang: "zh",
+  isValidated: false,
+};
