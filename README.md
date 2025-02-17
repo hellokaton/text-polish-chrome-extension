@@ -1,5 +1,7 @@
 # Text Polish - A Chrome Extension 🤖
 
+[简体中文](./README.zh-CN.md) | [English](./README.md)
+
 A Chrome extension built with WXT and shadcn/ui that helps you polish text with AI capabilities. Simply select any text on a webpage to translate, explain, or copy it with a sleek floating menu.
 
 ## ✨ Features
@@ -66,7 +68,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+[MIT](LICENSE)
 
 ## 🙏 Acknowledgments
 
